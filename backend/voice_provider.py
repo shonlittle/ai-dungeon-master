@@ -76,17 +76,32 @@ class VoiceProvider:
         """
         Return mock audio data for testing.
 
-        Creates a simple silent MP3 frame (about 1 second of silence).
+        Creates a valid WAV file with 1 second of silence.
+        WAV format is more reliable for testing across browsers.
         """
-        # Minimal valid MP3 header (MPEG-1 Layer III, 44.1kHz, 128kbps)
-        # This creates a short silent audio file for testing
-        mp3_frame = (
-            b"\xff\xfb\x90\x00"  # MP3 sync word + MPEG1 Layer3 128kbps
-            b"\x00" * 118  # Padding to complete frame
-        )
-        # Create multiple frames for ~1 second of audio
-        mock_mp3 = mp3_frame * 40  # Approximately 1 second
-        return base64.b64encode(mock_mp3).decode("utf-8")
+        # WAV header for 1 second of silence at 44.1kHz, 16-bit mono
+        # RIFF header
+        riff_header = b"RIFF"
+        wav_size = 36 + 44100 * 2  # File size - 8
+        riff_header += wav_size.to_bytes(4, "little")
+
+        # WAVE format
+        format_chunk = b"WAVEfmt "
+        format_chunk += (16).to_bytes(4, "little")  # Subchunk size
+        format_chunk += (1).to_bytes(2, "little")  # Audio format (PCM)
+        format_chunk += (1).to_bytes(2, "little")  # Number of channels (mono)
+        format_chunk += (44100).to_bytes(4, "little")  # Sample rate
+        format_chunk += (88200).to_bytes(4, "little")  # Byte rate (44100 * 2)
+        format_chunk += (2).to_bytes(2, "little")  # Block align
+        format_chunk += (16).to_bytes(2, "little")  # Bits per sample
+
+        # Data chunk with silence (zeros)
+        data_chunk = b"data"
+        data_chunk += (44100 * 2).to_bytes(4, "little")  # Data size
+        data_chunk += b"\x00" * (44100 * 2)  # 1 second of silence
+
+        wav_data = riff_header + format_chunk + data_chunk
+        return base64.b64encode(wav_data).decode("utf-8")
 
 
 # Create singleton instance

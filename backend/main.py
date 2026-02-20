@@ -95,7 +95,7 @@ async def generate_voice_narration(request: VoiceRequest) -> VoiceResponse:
         logger.info("Voice narration generated successfully")
         return VoiceResponse(
             audio_base64=audio_base64,
-            content_type="audio/mp3",
+            content_type="audio/wav",
         )
 
     except Exception as e:
@@ -123,6 +123,6 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8002,
+        port=8000,
         log_level="info",
     )
