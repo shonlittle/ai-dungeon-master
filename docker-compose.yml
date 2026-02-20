@@ -7,11 +7,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8002:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - LLM_PROVIDER=xai
       - LLM_MODEL=grok-4-fast-non-reasoning
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - XAI_API_KEY=${XAI_API_KEY}
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=8000
     volumes:
