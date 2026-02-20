@@ -39,7 +39,7 @@ services:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:8002
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - ./frontend:/app
       - /app/node_modules
