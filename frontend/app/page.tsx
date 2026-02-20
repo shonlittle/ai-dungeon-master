@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { GameState, DMResponse } from "@/lib/types";
 import { gameClient } from "@/lib/gameClient";
 
 export default function Home() {
+  const [hydrated, setHydrated] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
   const [dmResponse, setDmResponse] = useState<DMResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -78,7 +83,7 @@ export default function Home() {
       const voiceResponse = await gameClient.getVoiceNarration(text);
 
       if (audioRef.current) {
-        const audioData = `data:audio/mp3;base64,${voiceResponse.audio_base64}`;
+        const audioData = `data:audio/wav;base64,${voiceResponse.audio_base64}`;
         audioRef.current.src = audioData;
         setAudioPlaying(true);
 
@@ -121,6 +126,10 @@ export default function Home() {
     setPlayerName("");
     setPlayerClass("Rogue");
   };
+
+  if (!hydrated) {
+    return null;
+  }
 
   if (!gameState) {
     return (
