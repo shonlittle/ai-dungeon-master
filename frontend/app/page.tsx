@@ -87,12 +87,31 @@ export default function Home() {
         audioRef.current.src = audioData;
         setAudioPlaying(true);
 
-        audioRef.current.onended = () => {
+        // Handle audio playback with proper cleanup
+        const handleEnded = () => {
           setAudioPlaying(false);
           setLoading(false);
+          audioRef.current?.removeEventListener("ended", handleEnded);
+          audioRef.current?.removeEventListener("error", handleError);
         };
 
-        audioRef.current.play();
+        const handleError = () => {
+          setError("Audio playback error");
+          setAudioPlaying(false);
+          setLoading(false);
+          audioRef.current?.removeEventListener("ended", handleEnded);
+          audioRef.current?.removeEventListener("error", handleError);
+        };
+
+        audioRef.current.addEventListener("ended", handleEnded);
+        audioRef.current.addEventListener("error", handleError);
+
+        try {
+          await audioRef.current.play();
+        } catch (playError) {
+          // Auto-play might be blocked, just continue
+          handleEnded();
+        }
       }
     } catch (err) {
       const message =

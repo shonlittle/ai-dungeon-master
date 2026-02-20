@@ -1,12 +1,15 @@
 """Adapter for Grok Voice TTS API calls."""
 
 import base64
+import logging
 import os
 
 import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class VoiceProvider:
@@ -16,7 +19,10 @@ class VoiceProvider:
         """Initialize voice provider with API credentials."""
         self.api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("XAI_API_KEY")
         # TODO: Replace with actual Grok Voice endpoint
+        # Current placeholder: https://api.x.ai/v1/audio/speech
+        # Note: Grok Voice TTS integration is pending endpoint availability
         self.api_url = "https://api.x.ai/v1/audio/speech"
+        self.use_mock = True  # Set to False when real Grok Voice endpoint is available
 
     async def generate_voice(self, text: str) -> str:
         """
@@ -26,10 +32,14 @@ class VoiceProvider:
             text: Text to convert to speech
 
         Returns:
-            Base64-encoded audio data (mp3)
+            Base64-encoded audio data (WAV format)
         """
         if not self.api_key:
-            # Return mock audio for testing
+            logger.warning("No API key found, using mock audio")
+            return self._get_mock_audio()
+
+        if self.use_mock:
+            logger.info("Mock audio mode (Grok Voice endpoint not yet integrated)")
             return self._get_mock_audio()
 
         return await self._call_voice_api(text)
@@ -42,14 +52,21 @@ class VoiceProvider:
         Expected payload structure:
         {
             "text": "...",
-            "voice": "alloy",  # or other voice
-            "model": "grok-voice-1"
+            "voice": "alloy",  # or other voice options
+            "model": "grok-voice-1"  # or appropriate model name
         }
 
         Expected response:
-        Binary audio data (mp3 format)
+        Binary audio data (mp3 or WAV format)
+
+        To integrate real Grok Voice:
+        1. Confirm the correct API endpoint with Grok/xAI
+        2. Update self.api_url with the real endpoint
+        3. Set self.use_mock = False in __init__
+        4. Test the integration
         """
         try:
+            logger.info(f"Calling Grok Voice API for text: {len(text)} chars")
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
@@ -58,7 +75,7 @@ class VoiceProvider:
             payload = {
                 "text": text,
                 "voice": "alloy",
-                "model": "grok-voice-1",  # Placeholder model name
+                "model": "grok-voice-1",
             }
 
             async with httpx.AsyncClient(timeout=30) as client:
@@ -66,9 +83,14 @@ class VoiceProvider:
                 resp.raise_for_status()
                 # Assuming response is binary audio data
                 audio_bytes = resp.content
+                logger.info(
+                    f"Successfully got audio from Grok Voice API ({len(audio_bytes)} bytes)"
+                )
                 return base64.b64encode(audio_bytes).decode("utf-8")
-        except Exception:
-            # Fallback to mock if real API fails
+        except Exception as e:
+            logger.error(
+                f"Grok Voice API call failed: {e}. Falling back to mock audio."
+            )
             return self._get_mock_audio()
 
     @staticmethod
