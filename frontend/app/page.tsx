@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { GameState, DMResponse } from "@/lib/types";
 import { gameClient } from "@/lib/gameClient";
 
